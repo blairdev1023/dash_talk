@@ -13,10 +13,10 @@ from sklearn import datasets
 ################################################################################
 
 def load_df():
-    data = datasets.load_boston().data
-    cols = datasets.load_boston().feature_names
+    data = datasets.load_iris().data
+    cols = datasets.load_iris().feature_names
     df = pd.DataFrame(data=data, columns=cols)
-    df['target'] = datasets.load_boston().target
+    df['target'] = datasets.load_iris().target
     return df
 
 ################################################################################
@@ -27,12 +27,16 @@ app = dash.Dash()
 df = load_df()
 
 app.layout = html.Div([
-    html.H2('Boston Visualization'),
+    html.H2('Iris Visualization'),
     dcc.Dropdown(
-        id='graph-dropdown',
+        id='graph-dropdown-1',
         options=[{'label': i, 'value': i} for i in df.columns],
-        multi=True,
         value=df.columns[0]
+    ),
+    dcc.Dropdown(
+        id='graph-dropdown-2',
+        options=[{'label': i, 'value': i} for i in df.columns],
+        value=df.columns[1]
     ),
     dcc.Graph(id='main-graph')
 ])
@@ -43,27 +47,29 @@ app.layout = html.Div([
 
 @app.callback(
     Output('main-graph', 'figure'),
-    [Input('graph-dropdown', 'value')])
-def graph_maker(cols):
+    [Input('graph-dropdown-1', 'value'),
+    Input('graph-dropdown-2', 'value')])
+def graph_maker(col1, col2):
     '''
-    Main graph for app.
+    Returns the figure dict for main plot
     '''
+
     data = []
-    for col in cols:
-        trace = go.Scatter(
-            x=[n for n in range(df[col].size)],
-            y=df[col],
-            mode='lines',
-            name=col,
-            line={'shape': 'spline'}
-        )
-        data.append(trace)
+    trace = go.Scatter(
+        x=df[col1],
+        y=df[col2],
+        mode='markers',
+        # name=col,
+        # line={'shape': 'spline'}
+    )
+    data.append(trace)
 
     layout = go.Layout(
-        yaxis={'title': 'thingy'},
+        xaxis={'title': col1},
+        yaxis={'title': col2},
     )
     return {'data': data, 'layout': layout}
 
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(debug=True)
