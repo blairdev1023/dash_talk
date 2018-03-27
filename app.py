@@ -7,6 +7,7 @@ import plotly.graph_objs as go
 import pandas as pd
 import numpy as np
 from sklearn import datasets
+from sklearn import linear_model
 
 ################################################################################
 ##################################### FUNC #####################################
@@ -22,6 +23,12 @@ def load_df():
     df['target'] = datasets.load_iris().target
     return df
 
+def regression_line(target):
+    '''
+    Returns the x and y-prediction points of the best-fit linear regression
+    line for the given iris target
+    '''
+
 ################################################################################
 ##################################### HTML #####################################
 ################################################################################
@@ -35,7 +42,7 @@ app.layout = html.Div([
         html.Div([
             dcc.Dropdown(
                 id='graph-dropdown-1',
-                options=[{'label': i, 'value': i} for i in df.columns],
+                options=[{'label': i, 'value': i} for i in df.columns[:4]],
                 value=df.columns[0]
             )
         ], style={'width': '50%', 'display': 'inline-block'}
@@ -43,10 +50,15 @@ app.layout = html.Div([
         html.Div([
             dcc.Dropdown(
                 id='graph-dropdown-2',
-                options=[{'label': i, 'value': i} for i in df.columns],
+                options=[{'label': i, 'value': i} for i in df.columns[:4]],
                 value=df.columns[1]
             )
         ], style={'width': '50%', 'float': 'right'}
+        ),
+        dcc.Checklist(
+            id='regression-checks',
+            options=[{'label': i, 'value': i} for i in range(3)],
+            values=[1]
         ),
         dcc.Graph(id='main-graph', config={'displayModeBar': False})
     ],
@@ -63,15 +75,17 @@ app.layout = html.Div([
 @app.callback(
     Output('main-graph', 'figure'),
     [Input('graph-dropdown-1', 'value'),
-    Input('graph-dropdown-2', 'value')])
-def graph_maker(col1, col2):
+    Input('graph-dropdown-2', 'value'),
+    Input('regression-checks', 'values')])
+def graph_maker(col1, col2, checks):
     '''
     Returns the figure dict for main plot
     '''
 
     color_dict = {0: 'red', 1: 'yellow', 2: 'blue'}
-
     data = []
+
+    # markers
     trace = go.Scatter(
         x=df[col1],
         y=df[col2],
@@ -83,6 +97,21 @@ def graph_maker(col1, col2):
         }
     )
     data.append(trace)
+
+    # regression line
+    for val in checks:
+        model = linear_model.LinearRegression()
+        x = df[df['target'] == val]['sepal width (cm)'].values.reshape(-1,1)
+        y = df[df['target'] == val]['petal length (cm)'].values.reshape(-1,1)
+        model.fit(x, y)
+        y_pred = model.predict(x)
+        trace = go.Scatter(
+            x=x,
+            y=y_pred,
+            mode='line'
+        )
+        print(trace)
+        data.append(trace)
 
     layout = go.Layout(
         xaxis={'title': col1},
