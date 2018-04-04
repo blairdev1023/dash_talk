@@ -101,23 +101,27 @@ def graph_maker(col1, col2, checks):
     # regression line
     for val in checks:
         model = linear_model.LinearRegression()
-        x = df[df['target'] == val]['sepal width (cm)'].values.reshape(-1,1)
-        y = df[df['target'] == val]['petal length (cm)'].values.reshape(-1,1)
-        model.fit(x, y)
-        y_pred = model.predict(x)
+        x = df[df['target'] == val][col1]
+        y = df[df['target'] == val][col2]
+        model.fit(x.values.reshape(-1,1), y.values.reshape(-1,1))
+        y_pred = model.predict(x.values.reshape(-1,1))
+        y_pred = [y[0] for y in y_pred]
+        print(x)
+        print(y_pred)
         trace = go.Scatter(
             x=x,
             y=y_pred,
-            mode='line'
+            mode='line',
+            line={'color': color_dict[val]}
         )
-        print(trace)
         data.append(trace)
 
     layout = go.Layout(
         xaxis={'title': col1},
         yaxis={'title': col2},
         hovermode='closest',
-        margin={'l': 0, 'b': 0, 't': 0, 'r': 0}
+        margin={'l': 0, 'b': 0, 't': 0, 'r': 0},
+        showlegend=False
     )
     return {'data': data, 'layout': layout}
 
