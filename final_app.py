@@ -23,12 +23,6 @@ def load_df():
     df['target'] = datasets.load_iris().target
     return df
 
-def regression_line(target):
-    '''
-    Returns the x and y-prediction points of the best-fit linear regression
-    line for the given iris target
-    '''
-
 ################################################################################
 ##################################### HTML #####################################
 ################################################################################
@@ -39,6 +33,7 @@ df = load_df()
 app.layout = html.Div([
     html.H2('Iris Visualization'),
     html.Div([
+        # Feature Selector 1
         html.Div([
             dcc.Dropdown(
                 id='graph-dropdown-1',
@@ -47,6 +42,7 @@ app.layout = html.Div([
             )
         ], style={'width': '50%', 'display': 'inline-block'}
         ),
+        # Feature Selector 2
         html.Div([
             dcc.Dropdown(
                 id='graph-dropdown-2',
@@ -55,11 +51,16 @@ app.layout = html.Div([
             )
         ], style={'width': '50%', 'float': 'right'}
         ),
-        dcc.Checklist(
-            id='regression-checks',
-            options=[{'label': i, 'value': i} for i in range(3)],
-            values=[1]
-        ),
+        # Regression Checklist
+        html.Div([
+            html.Label('Regression Target'),
+            dcc.Checklist(
+                id='regression-checks',
+                options=[{'label': i, 'value': i} for i in range(3)],
+                values=[0]
+            )
+        ]),
+        # Main Plot
         dcc.Graph(id='main-graph', config={'displayModeBar': False})
     ],
     style={'width': '70%',
@@ -82,21 +83,24 @@ def graph_maker(col1, col2, checks):
     Returns the figure dict for main plot
     '''
 
-    color_dict = {0: 'red', 1: 'yellow', 2: 'blue'}
+    colors = ['red', 'green', 'blue']
+    names = datasets.load_iris().target_names
     data = []
 
     # markers
-    trace = go.Scatter(
-        x=df[col1],
-        y=df[col2],
-        mode='markers',
-        marker={'size': 15,
-                'opacity': 0.7,
-                'color': [color_dict[i] for i in df['target']],
-                'line': {'color': 'black', 'width': 0.5}
-        }
-    )
-    data.append(trace)
+    for target in df['target'].unique():
+        trace = go.Scatter(
+            x=df[df['target'] == target][col1],
+            y=df[df['target'] == target][col2],
+            mode='markers',
+            name=names[target],
+            marker=dict(size=15,
+                    opacity= 0.7,
+                    color=colors[target],
+                    line={'color': 'black', 'width': 0.5}
+            )
+        )
+        data.append(trace)
 
     # regression line
     for val in checks:
@@ -106,13 +110,12 @@ def graph_maker(col1, col2, checks):
         model.fit(x.values.reshape(-1,1), y.values.reshape(-1,1))
         y_pred = model.predict(x.values.reshape(-1,1))
         y_pred = [y[0] for y in y_pred]
-        print(x)
-        print(y_pred)
         trace = go.Scatter(
             x=x,
             y=y_pred,
             mode='line',
-            line={'color': color_dict[val]}
+            line={'color': colors[val]},
+            showlegend=False
         )
         data.append(trace)
 
@@ -120,10 +123,10 @@ def graph_maker(col1, col2, checks):
         xaxis={'title': col1},
         yaxis={'title': col2},
         hovermode='closest',
-        margin={'l': 0, 'b': 0, 't': 0, 'r': 0},
-        showlegend=False
+        margin={'l': '5%', 'b': '5%', 't': 0, 'r': 0},
     )
+
     return {'data': data, 'layout': layout}
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, port=8052)
