@@ -50,7 +50,7 @@ app.layout = html.Div([
     ], style={'width': '50%', 'float': 'right'}
     ),
     # Main Plot
-    dcc.Graph(id='main-graph', config={'displayModeBar': False})
+    dcc.Graph(id='main-graph')
 ])
 
 ################################################################################
