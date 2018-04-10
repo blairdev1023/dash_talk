@@ -68,7 +68,7 @@ def graph_maker(col1, col2):
     data = []
 
     # markers
-    for target in range(2):
+    for target in range(3):
         trace = go.Scatter(
             x=df[df['target'] == target][col1],
             y=df[df['target'] == target][col2],
